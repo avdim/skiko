@@ -1,10 +1,7 @@
 package org.jetbrains.skia
 
 import org.jetbrains.skia.impl.use
-import org.jetbrains.skia.paragraph.FontCollection
-import org.jetbrains.skia.paragraph.LineMetrics
-import org.jetbrains.skia.paragraph.ParagraphBuilder
-import org.jetbrains.skia.paragraph.ParagraphStyle
+import org.jetbrains.skia.paragraph.*
 import org.jetbrains.skiko.tests.SkipJsTarget
 import org.jetbrains.skiko.tests.SkipNativeTarget
 import kotlin.test.Test
@@ -42,6 +39,22 @@ class ParagraphTest {
             assertEquals(2, lineMetrics.endIndex)
             assertEquals(2, lineMetrics.endIncludingNewline)
             assertEquals(2, lineMetrics.endExcludingWhitespaces)
+        }
+    }
+}
+
+@SkipJsTarget
+class ParagraphLayoutTest {
+    private val fontCollection = FontCollection().setDefaultFontManager(FontMgr.default)
+
+    @Test
+    fun layoutLinefeed() {
+        repeat(1000) { // the bug is flaky, and isn't always reproducible
+            val para = ParagraphBuilder(ParagraphStyle(), fontCollection).use {
+                it.addText("xxx\r\nxxx")
+                it.build()
+            }.layout(Float.POSITIVE_INFINITY)
+            para.getRectsForRange(2, 8, RectHeightMode.MAX, RectWidthMode.MAX)
         }
     }
 }
