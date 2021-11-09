@@ -28,7 +28,7 @@ actual suspend fun loadBytesFromPath(path: String): ByteArray {
         throw Error("File '$path' is too long")
     }
 
-    if (size == 0L) {
+    if (size.toLong() == 0L) {
         fclose(file)
         return byteArrayOf()
     }

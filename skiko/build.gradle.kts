@@ -148,6 +148,24 @@ fun registerNativeBridgesTask(os: OS, arch: Arch): TaskProvider<CompileSkikoCppT
                     *skiaPreprocessorFlags()
                 ))
             }
+            OS.Windows -> {
+                compiler.set(windowsSdkPaths.compiler.absolutePath)
+                includeHeadersNonRecursive(windowsSdkPaths.includeDirs)
+                flags.set(listOf(
+                    "/nologo",
+                    *buildType.msvcCompilerFlags,
+                    "-DSK_BUILD_FOR_WIN",
+                    "-D_CRT_SECURE_NO_WARNINGS",
+                    "-D_HAS_EXCEPTIONS=0",
+                    "-DWIN32_LEAN_AND_MEAN",
+                    "-DNOMINMAX",
+                    "-DSK_GAMMA_APPLY_TO_A8",
+                    "-DSK_DIRECT3D",
+                    "/utf-8",
+                    "/GR-", // no-RTTI.
+                    *skiaPreprocessorFlags()
+                ))
+            }
             else -> throw GradleException("$os not yet supported")
         }
 
@@ -243,6 +261,7 @@ kotlin {
             "macos-x64" -> allNativeTargets[OS.MacOS to Arch.X64] = NativeCompilationInfo(macosX64())
             "macos-arm64" -> allNativeTargets[OS.MacOS to Arch.Arm64] = NativeCompilationInfo(macosArm64())
             "linux-x64" -> allNativeTargets[OS.Linux to Arch.X64] = NativeCompilationInfo(linuxX64())
+            "windows-x64" -> allNativeTargets[OS.Windows to Arch.X64] = NativeCompilationInfo(mingwX64())
         }
 
         if (hostOs == OS.MacOS) {
@@ -257,8 +276,8 @@ kotlin {
             val unpackedSkia = unzipper.get()
             val skiaDir = unpackedSkia.absolutePath
 
-            val bridgesLibrary = "$buildDir/nativeBridges/static/$targetString/skiko-native-bridges-$targetString.a"
-            val allLibraries = skiaStaticLibraries(skiaDir, targetString) + bridgesLibrary
+            val bridgesLibrary = "$buildDir/nativeBridges/static/$targetString/skiko-native-bridges-$targetString${osArch.first.staticLibExt}"
+            val allLibraries = skiaStaticLibraries(skiaDir, osArch.first, targetString) + bridgesLibrary
 
             compilation.target.compilations.all {
                 val skiaBinDir = "$skiaDir/out/${buildType.id}-${osArch.first.id}-${osArch.second.id}"
@@ -281,6 +300,19 @@ kotlin {
                             "-linker-option", "$skiaBinDir/libskunicode.a",
                             "-linker-option", "$skiaBinDir/libskia.a"
                             )
+                        OS.Windows -> {
+                            println(windowsSdkPaths.compiler.absolutePath)
+                            val vcdir = windowsSdkPaths.compiler.parentFile.parentFile.parentFile.parentFile
+                            val libpath = File(vcdir, "lib/x64").absolutePath
+                            println("vc=$libpath")
+                            // We link K/N applications with ld linker which doesn't have MSVC runtime
+                            // so give hints about required MSVC files.
+                            listOf(
+                                "msvcmrt.lib"
+                            ).map {
+                                "-linker-option" to "$libpath/$it"
+                            }.flatMap { listOf(it.first, it.second) }
+                        }
                         else -> emptyList()
                     }
                     freeCompilerArgs = allLibraries.map { listOf("-include-binary", it) }.flatten() + linkerFlags
@@ -297,26 +329,38 @@ kotlin {
                     include("**/*.o")
                 }
                 inputs.files(objectFiles)
-
                 val outDir = "$buildDir/nativeBridges/static/$targetString"
-                val staticLib = "$outDir/skiko-native-bridges-$targetString.a"
+                val staticLib = "$outDir/skiko-native-bridges-$targetString${osArch.first.staticLibExt}"
                 workingDir = File(outDir)
-                if (osArch.first == OS.Linux) {
-                    executable = "ar"
-                    argumentProviders.add {
+                when (osArch.first) {
+                    OS.Linux -> {
+                        executable = "ar"
+                        argumentProviders.add {
                         listOf(
                             "-crs",
                             staticLib
-                        )
+                        )}
                     }
-                } else {
-                    executable = "libtool"
-                    argumentProviders.add {
-                        listOf(
-                            "-static",
-                            "-o",
-                            staticLib
-                        )
+                    OS.Windows -> {
+                        executable = windowsSdkPaths.archiver.absolutePath
+                        argumentProviders.add {
+                            listOf(
+                                "/nologo",
+                                "/OUT:$staticLib"
+                            )}
+                    }
+
+                    OS.IOS, OS.MacOS -> {
+                        executable = "libtool"
+                        argumentProviders.add {
+                            listOf(
+                                "-static",
+                                "-o",
+                                staticLib
+                            )}
+                    }
+                    else -> {
+                        TODO("Need to define static linking for ${osArch.first}")
                     }
                 }
                 argumentProviders.add { objectFiles.files.map { it.absolutePath } }
@@ -398,6 +442,20 @@ kotlin {
                 }
                 val linuxX64Test by getting {
                     dependsOn(linuxTest)
+                }
+            }
+            if (hostOs == OS.Windows) {
+                val windowsMain by creating {
+                    dependsOn(nativeMain)
+                }
+                val windowsTest by creating {
+                    dependsOn(nativeTest)
+                }
+                val mingwX64Main by getting {
+                    dependsOn(windowsMain)
+                }
+                val mingwX64Test by getting {
+                    dependsOn(windowsTest)
                 }
             }
             if (hostOs == OS.MacOS) {
@@ -504,32 +562,35 @@ fun skiaPreprocessorFlags(): Array<String> {
     ).toTypedArray()
 }
 
-fun skiaStaticLibraries(skiaDir: String, targetString: String): List<String> {
+fun skiaStaticLibraries(skiaDir: String, os: OS, targetString: String): List<String> {
     val skiaBinSubdir = "$skiaDir/out/${buildType.id}-$targetString"
+    val prefix = os.staticLibPrefix
+    val suffix = os.staticLibExt
     return listOf(
-        "libskresources.a",
-        "libparticles.a",
-        "libskparagraph.a",
-        "libskia.a",
-        "libicu.a",
-        "libskottie.a",
-        "libsvg.a",
-        "libpng.a",
-        "libfreetype2.a",
-        "libwebp_sse41.a",
-        "libsksg.a",
-        "libskunicode.a",
-        "libwebp.a",
-        "libdng_sdk.a",
-        "libpiex.a",
-        "libharfbuzz.a",
-        "libexpat.a",
-        "libzlib.a",
-        "libjpeg.a",
-        "libskshaper.a"
-    ).map{
-        "$skiaBinSubdir/$it"
-    }
+        "skresources",
+        "particles",
+        "skparagraph",
+        "skia",
+        "icu",
+        "skottie",
+        "svg",
+        "libpng",
+        "freetype2",
+        "libwebp_sse41",
+        "sksg", // Not relevant on Windows
+        "skunicode",
+        "libwebp",
+        "dng_sdk",
+        "piex",
+        "harfbuzz",
+        "expat",
+        "zlib",
+        "jpeg",
+        "skshaper"
+    ).map {
+        val path = "$skiaBinSubdir/${if (it.startsWith(prefix)) "" else prefix}$it$suffix"
+        if (file(path).exists()) path else null
+    }.filterNotNull()
 }
 
 val skiaJvmBindingsDir: Provider<File> = registerOrGetSkiaDirProvider(targetOs, targetArch)
@@ -954,6 +1015,7 @@ val skikoRuntimeDirForTests by project.tasks.registering(Copy::class) {
     }
     destinationDir = project.buildDir.resolve("skiko-runtime-for-tests")
 }
+
 tasks.withType<Test>().configureEach {
     dependsOn(skikoRuntimeDirForTests)
     dependsOn(skikoJvmRuntimeJar)
@@ -1006,8 +1068,6 @@ val emptySourcesJar by tasks.registering(Jar::class) {
 val emptyJavadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")
 }
-
-
 
 publishing {
     repositories {
@@ -1129,11 +1189,16 @@ afterEvaluate {
         source(generatedKotlin)
         // TDOD: do we need this 'if'?
         if (supportNative) {
-            val compilationInfoKey = allNativeTargets.keys.singleOrNull { "${it.first.id}_${it.second.id}" == this.target }
+            val compilationInfoKey = allNativeTargets.keys.singleOrNull { "${kotlinName(it.first)}_${it.second.id}" == this.target }
                 ?: throw GradleException("No cross-target for ${this.target}")
             dependsOn(allNativeTargets[compilationInfoKey]!!.linkTask)
         }
     }
+}
+
+fun kotlinName(os: OS): String = when (os) {
+    OS.Windows -> "mingw"
+    else -> os.id
 }
 
 // Kotlin/JS has a bug preventing compilation on non-x86 Linux machines,

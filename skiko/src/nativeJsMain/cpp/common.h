@@ -128,10 +128,11 @@ KNativePointer ptrToInterop(T* ptr) {
 
 #ifdef __clang__
 __attribute__((noreturn))
-void TODO(const char*);
+#elif defined(_MSC_VER)
+__declspec(noreturn)
 #else
-void TODO(const char*);
 #endif
+void TODO(const char*);
 
 #ifdef SKIKO_WASM
 #include <emscripten.h>

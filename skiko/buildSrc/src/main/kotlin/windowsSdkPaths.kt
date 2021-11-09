@@ -9,6 +9,7 @@ import java.io.File
 data class WindowsSdkPaths(
     val compiler: File,
     val linker: File,
+    val archiver: File,
     val includeDirs: Collection<File>,
     val libDirs: Collection<File>,
 )
@@ -29,6 +30,7 @@ fun findWindowsSdkPathsForCurrentOS(gradle: Gradle): WindowsSdkPaths {
     return WindowsSdkPaths(
         compiler = visualCpp.compilerExecutable,
         linker = visualCpp.linkerExecutable,
+        archiver = visualCpp.archiverExecutable,
         includeDirs = systemLibraries.flatMap { it.includeDirs },
         libDirs = systemLibraries.flatMap { it.libDirs }
     )

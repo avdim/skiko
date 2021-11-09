@@ -40,6 +40,19 @@ val OS.dynamicLibExt: String
         OS.Wasm -> ".wasm"
     }
 
+val OS.staticLibPrefix: String
+    get() = when (this) {
+        OS.Windows -> ""
+        else -> "lib"
+    }
+
+val OS.staticLibExt: String
+    get() = when (this) {
+        OS.Windows -> ".lib"
+        else -> ".a"
+    }
+
+
 
 enum class Arch(val id: String) {
     X64("x64"),
