@@ -16,6 +16,7 @@ internal actual fun Shaper.doShape(
     width: Float,
     runHandler: RunHandler
 ) {
+    println("JVM opts: ${opts.features}")
     interopScope {
         Shaper_nShape(
             _ptr,

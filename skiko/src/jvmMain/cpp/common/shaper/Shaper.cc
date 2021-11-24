@@ -299,6 +299,8 @@ public:
         jfloat x = fEnv->GetFloatField(point.get(), skija::Point::x);
         jfloat y = fEnv->GetFloatField(point.get(), skija::Point::y);
 
+        printf("jvm: x=%f y=%f\n", x, y);
+
         return SkShaper::RunHandler::Buffer{
             reinterpret_cast<SkGlyphID*>(fGlyphs.data()),
             fPositions.data(),

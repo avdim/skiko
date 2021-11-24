@@ -22,11 +22,13 @@ abstract class ManagedRunIterator<T> internal constructor(
 
     internal val _text: ManagedString?
     override fun close() {
+        println("ManagedRunIterator: close")
         super.close()
         _text?.close()
     }
 
     internal fun _getEndOfCurrentRun(): Int {
+        println("ManagedRunIterator: _getEndOfCurrentRun")
         return try {
             _nGetEndOfCurrentRun(_ptr, getPtr(_text))
         } finally {
@@ -36,6 +38,8 @@ abstract class ManagedRunIterator<T> internal constructor(
     }
 
     override fun hasNext(): Boolean {
+        println("ManagedRunIterator: hasNext")
+
         return try {
             !_nIsAtEnd(_ptr)
         } finally {

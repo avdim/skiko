@@ -22,6 +22,7 @@ class IcuBidiRunIterator(text: ManagedString?, manageText: Boolean, bidiLevel: I
 
     override operator fun next(): BidiRun {
         return try {
+            println("next in IcuBidiRunIterator")
             _nConsume(_ptr)
             BidiRun(_getEndOfCurrentRun(), _nGetCurrentLevel(_ptr))
         } finally {

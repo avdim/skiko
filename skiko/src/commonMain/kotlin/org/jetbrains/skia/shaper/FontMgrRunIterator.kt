@@ -24,6 +24,7 @@ class FontMgrRunIterator(text: ManagedString?, manageText: Boolean, font: Font?,
     constructor(text: String?, font: Font?) : this(ManagedString(text), true, font, ShapingOptions.DEFAULT)
 
     override operator fun next(): FontRun {
+        println("next in FontMgrRunIterator")
         return try {
             _nConsume(_ptr)
             FontRun(_getEndOfCurrentRun(), Font(_nGetCurrentFont(_ptr)))

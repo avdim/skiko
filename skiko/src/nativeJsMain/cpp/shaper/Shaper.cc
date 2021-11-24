@@ -148,7 +148,10 @@ SKIKO_EXPORT void org_jetbrains_skia_shaper_Shaper__1nShape
 {
     auto* instance = reinterpret_cast<SkShaper*>(ptr);
 
+
     SkString& text = *(reinterpret_cast<SkString*>(textPtr));
+    printf("shape called: %d\n", text.size());
+
     if (text.size() == 0) {
         return;
     }
@@ -160,6 +163,11 @@ SKIKO_EXPORT void org_jetbrains_skia_shaper_Shaper__1nShape
     auto* scriptRunIter = reinterpret_cast<SkShaper::ScriptRunIterator*>(scriptRunIterObj);
     auto* bidiRunIter = reinterpret_cast<SkShaper::BiDiRunIterator*>(bidiRunIterObj);
     auto* runHandler = reinterpret_cast<SkShaper::RunHandler*>(runHandlerObj);
+
+    printf("text is %s\n features %d\n", text.c_str(), features.size());
+    for (auto& f: features) {
+        printf("feature %d %d %d", f.value, f.start, f.end);
+    }
 
     instance->shape(text.c_str(), text.size(), *fontRunIter, *bidiRunIter, *scriptRunIter, *languageRunIter, features.data(), features.size(), std::numeric_limits<float>::infinity(), runHandler);
 }
@@ -182,11 +190,13 @@ public:
         _indicesConverter(text) {}
 
     void consume() override {
+        printf("SkikoRunIterator::consume\n");
         _onConsume();
         _endOfCurrentRun = _indicesConverter.from16To8(_onEndOfCurrentRun());
     }
     
     size_t endOfCurrentRun() const override {
+        printf("SkikoRunIterator::endOfCurrentRun: %d\n", _endOfCurrentRun);
         return _endOfCurrentRun;
     }
     
@@ -319,6 +329,7 @@ public:
     }
 
     Buffer runBuffer(const RunInfo& info) override {
+        printf("native runBuffer: %d\n", info.glyphCount);
         _glyphs    = std::vector<SkGlyphID>(info.glyphCount);
         _positions = std::vector<SkPoint>(info.glyphCount);
         _clusters  = std::vector<uint32_t>(info.glyphCount);
@@ -326,6 +337,8 @@ public:
         _runInfo = &info;
         _onRunOffset();
         _runInfo = nullptr;
+
+        printf("native: x=%f y=%f\n", _point.x(), _point.y());
 
         return {
             _glyphs.data(),

@@ -16,7 +16,6 @@ class ShapingOptions(
      */
     internal val isApproximatePunctuation: Boolean
 ) {
-
     internal fun _booleanPropsToInt(): Int {
         var i = 0
         if (isLeftToRight) i = i or 0x04

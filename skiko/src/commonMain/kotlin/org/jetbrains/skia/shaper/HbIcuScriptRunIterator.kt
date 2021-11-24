@@ -23,6 +23,7 @@ class HbIcuScriptRunIterator(text: ManagedString?, manageText: Boolean) : Manage
     constructor(text: String?) : this(ManagedString(text), true)
 
     override operator fun next(): ScriptRun {
+        println("next in HbIcuScriptRunIterator")
         return try {
             _nConsume(_ptr)
             ScriptRun(_getEndOfCurrentRun(), _nGetCurrentScriptTag(_ptr))

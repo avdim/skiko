@@ -20,6 +20,7 @@ internal actual fun Shaper.doShape(
     val managedScriptIter = toManaged(scriptIter, textUtf8)
     val managedLangIter = toManaged(langIter, textUtf8)
     val managedRunHandler = RunHandlerImpl(runHandler)
+    println("native opts: ${opts.features}")
     try {
         interopScope {
             @Suppress("CAST_NEVER_SUCCEEDS")
@@ -178,6 +179,7 @@ private class RunHandlerImpl(val runHandler: RunHandler) : Managed(RunHandler_nC
     init {
         val impl = this
         interopScope {
+            println("RunHandlerImpl")
             RunHandler_nInit(
                 _ptr,
                 onBeginLine = virtual { runHandler.beginLine() },
@@ -185,6 +187,7 @@ private class RunHandlerImpl(val runHandler: RunHandler) : Managed(RunHandler_nC
                 onCommitLine = virtual { runHandler.commitLine() },
                 onCommitRun = virtual {
                     val info = impl.runInfo
+                    println("info is $info")
                     val glyphs = impl.getGlyphs(info.glyphCount)
                     val clusters = impl.getClusters(info.glyphCount)
                     val positions = impl.getPositions(info.glyphCount)

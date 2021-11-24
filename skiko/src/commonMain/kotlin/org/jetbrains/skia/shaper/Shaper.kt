@@ -184,6 +184,7 @@ class Shaper internal constructor(ptr: NativePointer) : Managed(ptr, _FinalizerH
         runHandler: RunHandler
     ): Shaper {
         Stats.onNativeCall()
+        println("kotlin shape")
         doShape(textUtf8, fontIter, bidiIter, scriptIter, langIter, opts, width, runHandler)
         return this
     }
