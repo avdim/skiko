@@ -34,7 +34,7 @@ class FontMgrRunIterator(text: ManagedString?, manageText: Boolean, font: Font?,
         println("next in FontMgrRunIterator")
         return try {
             _nConsume(_ptr)
-            FontRun(_getEndOfCurrentRun(), currentFont))
+            FontRun(_getEndOfCurrentRun(), currentFont)
         } finally {
             reachabilityBarrier(this)
         }
