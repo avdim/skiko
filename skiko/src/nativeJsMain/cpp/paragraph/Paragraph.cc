@@ -160,7 +160,7 @@ SKIKO_EXPORT void org_jetbrains_skia_paragraph_Paragraph__1nUpdateFontSize
     Paragraph* instance = reinterpret_cast<Paragraph*>((ptr));
     SkString* text = reinterpret_cast<SkString*>((textPtr));
     auto conv = skija::UtfIndicesConverter(*text);
-    return instance->updateFontSize(conv.from16To8(from), conv.from16To8(to), fontSize);
+    return instance->updateFontSize(0, text->size(), fontSize);
 }
 
 SKIKO_EXPORT void org_jetbrains_skia_paragraph_Paragraph__1nUpdateForegroundPaint
@@ -169,7 +169,7 @@ SKIKO_EXPORT void org_jetbrains_skia_paragraph_Paragraph__1nUpdateForegroundPain
     SkPaint* paint = reinterpret_cast<SkPaint*>((paintPtr));
     SkString* text = reinterpret_cast<SkString*>((textPtr));
     auto conv = skija::UtfIndicesConverter(*text);
-    return instance->updateForegroundPaint(conv.from16To8(from), conv.from16To8(to), *paint);
+    return instance->updateForegroundPaint(0, text->size(), *paint);
 }
 
 SKIKO_EXPORT void org_jetbrains_skia_paragraph_Paragraph__1nUpdateBackgroundPaint
@@ -178,5 +178,5 @@ SKIKO_EXPORT void org_jetbrains_skia_paragraph_Paragraph__1nUpdateBackgroundPain
     SkPaint* paint = reinterpret_cast<SkPaint*>((paintPtr));
     SkString* text = reinterpret_cast<SkString*>((textPtr));
     auto conv = skija::UtfIndicesConverter(*text);
-    return instance->updateBackgroundPaint(conv.from16To8(from), conv.from16To8(to), *paint);
+    return instance->updateBackgroundPaint(0, text->size(), *paint);
 }

@@ -148,7 +148,6 @@ SKIKO_EXPORT void org_jetbrains_skia_shaper_Shaper__1nShape
 {
     auto* instance = reinterpret_cast<SkShaper*>(ptr);
 
-
     SkString& text = *(reinterpret_cast<SkString*>(textPtr));
     printf("shape called: %d\n", text.size());
 
@@ -158,13 +157,26 @@ SKIKO_EXPORT void org_jetbrains_skia_shaper_Shaper__1nShape
 
     std::vector<SkShaper::Feature> features = skija::shaper::ShapingOptions::getFeaturesFromIntsArray(optsFeatures, optsFeaturesLen);
 
-    auto* fontRunIter = reinterpret_cast<SkShaper::FontRunIterator*>(fontRunIterObj);
+    auto* fontRunIter0 = reinterpret_cast<SkShaper::FontRunIterator*>(fontRunIterObj);
+    auto& font = fontRunIter0->currentFont();
+    printf("YYY: %p", &font);
+    /*
     auto* languageRunIter = reinterpret_cast<SkShaper::LanguageRunIterator*>(languageRunIterObj);
     auto* scriptRunIter = reinterpret_cast<SkShaper::ScriptRunIterator*>(scriptRunIterObj);
     auto* bidiRunIter = reinterpret_cast<SkShaper::BiDiRunIterator*>(bidiRunIterObj);
+    */
+    std::unique_ptr<SkShaper::BiDiRunIterator> bidiRunIter(SkShaper::MakeBiDiRunIterator(text.c_str(), text.size(), UBIDI_DEFAULT_LTR));
+    std::unique_ptr<SkShaper::ScriptRunIterator> scriptRunIter(SkShaper::MakeHbIcuScriptRunIterator(text.c_str(), text.size()));
+    std::unique_ptr<SkShaper::LanguageRunIterator> languageRunIter(SkShaper::MakeStdLanguageRunIterator(text.c_str(), text.size()));
+    std::unique_ptr<SkShaper::FontRunIterator> fontRunIter(SkShaper::MakeFontMgrRunIterator(
+        text.c_str(),
+        text.size(),
+        font,
+        SkFontMgr::RefDefault()));
+
     auto* runHandler = reinterpret_cast<SkShaper::RunHandler*>(runHandlerObj);
 
-    printf("text is %s\n features %d\n", text.c_str(), features.size());
+    printf("XXX3: text is %s\n features %d\n", text.c_str(), features.size());
     for (auto& f: features) {
         printf("feature %d %d %d", f.value, f.start, f.end);
     }

@@ -20,14 +20,21 @@ class FontMgrRunIterator(text: ManagedString?, manageText: Boolean, font: Font?,
         }
     }
 
+    init {
+        println("FontMgrRunIterator::FontMgrRunIterator")
+    }
+
     constructor(text: String?, font: Font?, opts: ShapingOptions) : this(ManagedString(text), true, font, opts)
     constructor(text: String?, font: Font?) : this(ManagedString(text), true, font, ShapingOptions.DEFAULT)
+
+    val currentFont: Font
+        get() = Font(_nGetCurrentFont(_ptr))
 
     override operator fun next(): FontRun {
         println("next in FontMgrRunIterator")
         return try {
             _nConsume(_ptr)
-            FontRun(_getEndOfCurrentRun(), Font(_nGetCurrentFont(_ptr)))
+            FontRun(_getEndOfCurrentRun(), currentFont))
         } finally {
             reachabilityBarrier(this)
         }

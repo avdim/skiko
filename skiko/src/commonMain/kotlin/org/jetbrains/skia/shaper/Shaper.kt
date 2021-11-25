@@ -134,6 +134,7 @@ class Shaper internal constructor(ptr: NativePointer) : Managed(ptr, _FinalizerH
     ): Shaper {
         ManagedString(text).use { textUtf8 ->
             FontMgrRunIterator(textUtf8, false, font, opts).use { fontIter ->
+                println("iter font is ${fontIter.currentFont}")
                 IcuBidiRunIterator(
                     textUtf8,
                     false,
