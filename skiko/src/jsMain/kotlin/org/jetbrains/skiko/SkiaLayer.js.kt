@@ -85,6 +85,7 @@ actual open class SkiaLayer {
     }
 }
 
+actual typealias SkikoTouchPlatformEvent = Any
 actual typealias SkikoGesturePlatformEvent = Any
 actual typealias SkikoPlatformInputEvent = InputEvent
 actual typealias SkikoPlatformKeyboardEvent = KeyboardEvent
